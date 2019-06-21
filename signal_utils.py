@@ -96,7 +96,7 @@ def normalise_power_batch(spectros):
 def generate_noise(shape, p_signal, wl, hl):
     noise = nr.random(shape)
     noise = noise - np.average(noise) # Normalize
-    spectro = lr.stft(audio,
+    spectro = lr.stft(noise,
                       n_fft=int(wl),
                       hop_length=hl,
                       win_length=int(wl))
@@ -121,6 +121,8 @@ def add_noise(audio,snr, wl=256, hl=128, DEBUG=0):
     p_total = (p_signal + p_noise)
     alpha = ratio/p_total
     beta = 1/p_total
+    result = audio*alpha + scaled_noise*beta
+    
     if DEBUG > 0:
       print("Power signal vs noise", p_signal, p_noise)
       print("\nNoise Scaling factor",ratio)
