@@ -85,9 +85,10 @@ def normalise_power(spectro, avg_pw):
 # Input: Dictionary of spectros
 # Output: Power-Normalised Dictionary of spectros
 def normalise_power_batch(spectros):
-    vg_pw = get_avg_power(spectros)    
+    avg_pw = get_avg_power(spectros)    
     for key in spectros:
-        # TODO
+        spectros[key] = normalise_power(spectros[key],avg_pw)
+    return spectros
     
 # Generates noise with the same power as the signal
 # In: tuple of audio shape, signal power, window length, hop length
