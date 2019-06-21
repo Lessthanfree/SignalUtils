@@ -71,7 +71,7 @@ def get_power(spectro):
 # In: Dictionary of spectros 
 # Out: Average power of all spectros
 def get_avg_power(spectros):
-    return np.average(power)
+    power = []
     for spectro in clean_spectro.values(): # For each spectro in dictionary 
         power.append(get_power(spectro))
     return np.average(power)
