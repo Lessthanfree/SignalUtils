@@ -71,7 +71,7 @@ def get_power(spectro):
 # In: Dictionary of spectros 
 # Out: Average power of all spectros
 def get_avg_power(spectros):
-    power = []
+    return np.average(power)
     for spectro in clean_spectro.values(): # For each spectro in dictionary 
         power.append(get_power(spectro))
     return np.average(power)
@@ -96,7 +96,11 @@ def normalise_power_batch(spectros):
 def generate_noise(shape, p_signal, wl, hl):
     noise = nr.random(shape)
     noise = noise - np.average(noise) # Normalize
-    n_pow  = get_power(noise, wl, hl)
+    spectro = lr.stft(audio,
+                      n_fft=int(wl),
+                      hop_length=hl,
+                      win_length=int(wl))
+    n_pow  = get_power(spectro)
     scaled_noise = noise*(p_signal/n_pow)**0.5
     return scaled_noise, n_pow
 
@@ -105,7 +109,11 @@ def generate_noise(shape, p_signal, wl, hl):
 # Out: 1D Audio wave with noise, same power as original
 def add_noise(audio,snr, wl=256, hl=128, DEBUG=0):
     ratio = 10 ** (snr/10)
-    p_signal = get_power(audio, wl, hl)
+    spectro = lr.stft(audio,
+                      n_fft=int(wl),
+                      hop_length=hl,
+                      win_length=int(wl))
+    p_signal = get_power(spectro)
     scaled_noise, p_noise = generate_noise(audio.shape, p_signal, wl, hl)
     
     # Scale signal and noise to match SNR.
