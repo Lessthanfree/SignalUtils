@@ -86,13 +86,14 @@ def normalise_power(spectro, avg_pw):
 
 # Input: Dictionary of spectros
 # Output: Power-Normalised Dictionary of spectros
-def normalise_power_batch(spectros):r
-vg_pw = get_avg_power(spectros)    fo
-  r key ins
-     ectros
-               
+def normalise_power_batch(spectros):
+    vg_pw = get_avg_power(spectros)    
+    for key in spectros:
+        # TODO
     
 # Generates noise with the same power as the signal
+# In: tuple of audio shape, signal power, window length, hop length
+# Out: noise with same power as audio, noise power
 def generate_noise(shape, p_signal, wl, hl):
     noise = nr.random(shape)
     noise = noise - np.average(noise) # Normalize
@@ -100,6 +101,9 @@ def generate_noise(shape, p_signal, wl, hl):
     scaled_noise = noise*(p_signal/n_pow)**0.5
     return scaled_noise, n_pow
 
+# Adds noise to an audio wave.
+# In: 1D Audio wave, signal to noise ratio
+# Out: 1D Audio wave with noise, same power as original
 def add_noise(audio,snr, wl=256, hl=128, DEBUG=0):
     ratio = 10 ** (snr/10)
     p_signal = get_power(audio, wl, hl)
@@ -128,7 +132,7 @@ def cutoff(data):
     return np.array(new_data)
 
 # Crop the data in a variable shape dictionary to the shortest sample length, start decided randomly
-# In: Dictshortestionary of spectrograms
+# In: Dictionary of spectrograms
 # Out: Numpy array of cropped spectrograms
 def cutoff_2d(data):
     keys = list(data.keys())
@@ -143,7 +147,7 @@ def cutoff_2d(data):
 
 # For each frame, grab the context window
 # In: transposed spectrogram (X, 129)
-# OUT: 3D transposed spectrogram (X, 2C + 1, 129) where C = context
+# Out: 3D transposed spectrogram (X, 2C + 1, 129) where C = context
 def get_context(i_spectro, hop=1, context=5):
     freq = int(i_spectro.shape[1])
     end = i_spectro.shape[0]
