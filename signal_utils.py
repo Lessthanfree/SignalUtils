@@ -63,26 +63,23 @@ def lr_open_wav(filename, sample_rate, DEBUG=0):
 #     return p
 
 def get_power(spectro):
-  mag = np.abs(spectro)         # Magnitude of spectro
-  frame_avg = np.average(mag**2,0)  # Avg power of spectro
-  power = np.average(frame_avg)     # Avg power of audio wave
-  turn powerav
+    mag = np.abs(spectro)         # Magnitude of spectro
+    frame_avg = np.average(mag**2,0)  # Avg power of spectro
+    power = np.average(frame_avg)     # Avg power of audio wave
     return power
   
 # In: Dictionary of spectros 
 # Out: Average power of all spectros
-def get_avg_
-  power(spectros):power.append(get_power(spectro))
-    
-  return np.average(power)
-  r spectro in clean_spectro.values(): # For each spectro in dictionary
-#power.append(get_power(spectro))return np.average(power)
+def get_avg_power(spectros):
+    return np.average(power)
+    for spectro in clean_spectro.values(): # For each spectro in dictionary
+    #power.append(get_power(spectro))return np.average(power)
 
 # In: Spectrogram, average power to normalise to
 # Out: Normalised Spectrogram
 def normalise_power(spectro, avg_pw):
-  normalised = ((avg_pw/get_power(spectro))**0.5)*spectro
-  return normalised
+    normalised = ((avg_pw/get_power(spectro))**0.5)*spectro
+    return normalised
 
 # Input: Dictionary of spectros
 # Output: Power-Normalised Dictionary of spectros
@@ -206,14 +203,15 @@ def normalisation_concat(inputs):
     
 # Takes in 3D data, concatenates it, then normalises it
 def normalise_inputs(inputs):
+    # Concatenate
     inputs_concat = normalisation_concat(inputs)
     
     averaged = np.mean(inputs_concat,axis=0) # Average of each frame across all frequencies
     var = np.var(averaged, axis = 0) # Variance of all frames
     mean = np.mean(averaged) # Average of averages.
     
-    # Normalise a
-  
+    # Normalize 
+    inputs = (inputs - mean)/var
     return inputs
 
 def log_spectro(data):
