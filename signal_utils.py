@@ -62,7 +62,22 @@ def lr_open_wav(filename, sample_rate, DEBUG=0):
 #     p_wav = np.average(p_frame_avg) # Average power of the entire audio wave
 #     return p
 
+
+# In: Waveform
+# Out: Spectrogram
+def conv_to_spectro(audio):
+    WINDOW_LENGTH = 256
+    return lr.stft(audio,
+                   n_fft=WINDOW_LENGTH,
+                   hop_length=WINDOW_LENGTH//2,
+                   win_length=int(WINDOW_LENGTH))
+
+# In: 2D Spectrogram
+# Out: Power
 def get_power(spectro):
+    if not len(spectro.shape) == 2:
+        raise Exception("Expected 2D spectrogram, got shape " + str(spectro.shape))
+        return -1
     mag = np.abs(spectro)         # Magnitude of spectro
     frame_avg = np.average(mag**2,0)  # Avg power of spectro
     power = np.average(frame_avg)     # Avg power of audio wave
@@ -93,35 +108,34 @@ def normalise_power_batch(spectros):
 # Generates noise with the same power as the signal
 # In: tuple of audio shape, signal power, window length, hop length
 # Out: noise with same power as audio, noise power
-def generate_noise(shape, p_signal, wl, hl):
-    noise = nr.random(shape)
+def generate_noise(signal, wl, hl):
+    s_signal = conv_to_spectro(signal)
+    noise = nr.random(signal.shape)
     noise = noise - np.average(noise) # Normalize
-    spectro = lr.stft(noise,
-                      n_fft=int(wl),
-                      hop_length=hl,
-                      win_length=int(wl))
-    n_pow  = get_power(spectro)
-    scaled_noise = noise*(p_signal/n_pow)**0.5
-    return scaled_noise, n_pow
+    s_noise = conv_to_spectro(noise)
+    
+    p_signal = su.get_power(s_signal)
+    p_noise  = su.get_power(s_noise)
+    
+    # Scale waveform and power
+    scaled_noise = noise*((p_signal/p_noise)**0.5)
+    p_Snoise = p_noise*(p_signal/p_noise)
+    return scaled_noise, p_Snoise
 
 # Adds noise to an audio wave.
-# In: 1D Audio wave, signal to noise ratio
+# In: 1D Audio wave, signal to noise ratio in dB
 # Out: 1D Audio wave with noise, same power as original
 def add_noise(audio,snr, wl=256, hl=128, DEBUG=0):
     ratio = 10 ** (snr/10)
-    spectro = lr.stft(audio,
-                      n_fft=int(wl),
-                      hop_length=hl,
-                      win_length=int(wl))
-    p_signal = get_power(spectro)
-    scaled_noise, p_noise = generate_noise(audio.shape, p_signal, wl, hl)
+    spectro = conv_to_spectro(audio)
+    p_signal = su.get_power(spectro)
+    scaled_noise, p_noise = generate_noise(audio, wl, hl)
     
     # Scale signal and noise to match SNR.
     # Also downscales the result to match original Power
-    p_total = (p_signal + p_noise)
-    alpha = ratio/p_total
-    beta = 1/p_total
-    result = audio*alpha + scaled_noise*beta
+    alpha = (ratio/(ratio+1))**0.5
+    beta = 1/(ratio+1)**0.5
+    result = (audio*alpha + scaled_noise*beta)
     
     if DEBUG > 0:
       print("Power signal vs noise", p_signal, p_noise)
