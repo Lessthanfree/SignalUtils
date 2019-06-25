@@ -196,6 +196,60 @@ def get_context(i_spectro, hop=1, context=5):
         
         i+=hop
     return chunks
+
+#In: np array as Single Spectrogram
+#Out: np array of context windows w +- 5 frames with hop length 'hop'
+def get_context_spectro(t_spectro, context=5, hop=1):
+  freqs = int(t_spectro.shape[1])    # Frequencies
+  frames = t_spectro.shape[0]        # Num frames
+  RETURN_AS_LIST = True #@param {type:"boolean"}
+  if RETURN_AS_LIST == True:
+    chunks = []
+    i = 0
+    while i < frames: # while index within spectro
+      # start padding is required
+      if i < context:
+          num_pad = int(context - i)
+          pad = np.tile(t_spectro[0], (num_pad,1))        # Generate padding
+          back = np.append(pad,t_spectro[:i+1], axis = 0) # Back padding + middle
+      else:
+          back = t_spectro[i-context:i+1]                 # Back padding + middle
+      # end padding is required
+      if i + context > frames-1:
+          num_pad = i + context - frames + 1
+          pad = np.tile(t_spectro[frames-1], (num_pad,1)) # Generate padding
+          front = np.append(t_spectro[i+1:],pad, axis = 0) # Front padding
+      else:
+          front = t_spectro[i+1:i+1+context] # Front padding
+      chunk = np.append(back,front,axis=0)
+      #print("single",chunk.shape,"collection",chunks.shape)
+      chunks.append(chunk)
+      i+=hop
+    return chunks
+  elif RETURN_AS_LIST == False: 
+    chunks = np.empty((0,2*context+1,freqs)) # Empty 3D numpy array to store context windows
+    i = 0
+    while i < frames: # while index within spectro
+      # start padding is required
+      if i < context:
+          num_pad = int(context - i)
+          pad = np.tile(t_spectro[0], (num_pad,1))        # Generate padding
+          back = np.append(pad,t_spectro[:i+1], axis = 0) # Back padding + middle
+      else:
+          back = t_spectro[i-context:i+1]                 # Back padding + middle
+
+      # end padding is required
+      if i + context > frames-1:
+          num_pad = i + context - frames + 1
+          pad = np.tile(t_spectro[frames-1], (num_pad,1)) # Generate padding
+          front = np.append(t_spectro[i+1:],pad, axis = 0) # Front padding
+      else:
+          front = t_spectro[i+1:i+1+context] # Front padding
+      chunk = np.expand_dims(np.append(back,front,axis=0),axis=0)
+      #print("single",chunk.shape,"collection",chunks.shape)
+      chunks = np.append(chunks,chunk,axis=0)
+      i+=hop
+    return chunks
     
 
 # In: Numpy array of spectrograms
@@ -238,7 +292,7 @@ def normalise_inputs(inputs):
     
     # Normalize 
     inputs = (inputs - mean)/var
-    return inputs
+    return inputs, var, 
 
 def log_spectro(data):
     stft = stft_along_axis(data)
