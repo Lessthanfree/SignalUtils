@@ -264,44 +264,36 @@ def stft_along_axis(data, window_len = 256, hop_len = 128):
     labels = np.apply_along_axis(stft,1,data)
     return labels
     
-def normalisation_concat(inputs):
-    output = np.empty((inputs.shape[1],0))
-    lengths = []
-    sum = 0
-    for array in inputs:
-        output = np.concatenate((output, array), axis = 1)
-    return output
-    
-# DEPRECATED CODE
-# def normalisation_concat(inputs):
-#     output = np.array([[]])
-#     lengths = []
-#     sum = 0
-#     # Averages across the frequencies. Returns one value for eachEach timmealuemor array in inputs:
-#     output = np.concatenate((output,array))
-#     return output
-    
-# Takes in 3D data, concatenates it, then normalises it
+#In: Dictionary of spectrograms
+#Out: Dictionary of normalised spectrograms, concatenated spectrograms, and array of average and variances
 def normalise_inputs(inputs):
-    # Concatenate
-    inputs_concat = normalisation_concat(inputs)
+    # Concatenate to 1 array
+    inputs_concat = normalise_concat(inputs) 
+    averages = []
+    variances = []
+    rows = inputs_concat.shape[0]
     
-    averaged = np.mean(inputs_concat,axis=0) # Average of each frame across all frequencies
-    var = np.var(averaged, axis = 0) # Variance of all frames
-    mean = np.mean(averaged) # Average of averages.
-    
+    averages = np.mean(inputs_concat, axis=1)      # Average across all bins
+    variances = np.var(inputs_concat, axis=1)   # Variance of all bins
+    print(averages)
+    print(variances)
+
     # Normalize 
-    inputs = (inputs - mean)/var
-    return inputs, var, 
+    for key in inputs.keys():
+      for row in range(rows):
+        inputs[key][row] = (inputs[key][row]-averages[row])/variances[row]
+      
+    return inputs, inputs_concat, averages, variances
+
+#In: Dictionary of spectrograms
+#Out: Numpy arr of concatenated spectrograms
+def normalise_concat(inputs):
+  output = np.empty((129,0))
+  for spectro in inputs.values():
+    output = np.append(output, spectro, axis = 1)
+  return output
 
 def log_spectro(data):
     stft = stft_along_axis(data)
     log_spectro = np.log(abs(stft+1e-32))
     return log_spectro
-
-
-
-
-
-
-
