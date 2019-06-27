@@ -91,7 +91,7 @@ def get_power_wav(audio):
 def get_avg_power(waves):
     power = []
     for wave in waves.values():
-      power.append(get_power_wav(wav))
+      power.append(get_power_wav(wave))
     return np.average(power)
 
 # In: Wave file, avg pwr to normalise to
