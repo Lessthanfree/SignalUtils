@@ -73,36 +73,40 @@ def conv_to_spectro(audio):
 
 # In: 2D Spectrogram
 # Out: Power
-def get_power(spectro):
+def get_power_spec(spectro):
     if not len(spectro.shape) == 2:
         raise Exception("Expected 2D spectrogram, got shape " + str(spectro.shape))
         return -1
     mag = np.abs(spectro)         # Magnitude of spectro
-    frame_avg = np.average(mag**2,0)  # Avg power of spectro
-    power = np.average(frame_avg)     # Avg power of audio wave
+    frame_avg = np.average(mag**2,0)  # Avg power of spectro row-wise
+    power = np.average(frame_avg)     # Avg power of entire spectro
     return power
-  
-# In: Dictionary of spectros 
-# Out: Average power of all spectros
-def get_avg_power(spectros):
-    return np.average(power)
-    for spectro in spectros.values(): # For each spectro in dictionary 
-        power.append(get_power(spectro))
+
+def get_power_wav(audio):
+    spectro = lr.stft(audio,n_fft=256,hop_length=128)
+    return get_power_spec(spectro) 
+
+# In: Dictionary of wavs
+# Out: Average power of all wavs
+def get_avg_power(waves):
+    power = []
+    for wave in waves.values():
+      power.append(get_power_wav(wav))
     return np.average(power)
 
-# In: Spectrogram, average power to normalise to
+# In: Wave file, avg pwr to normalise to
 # Out: Normalised Spectrogram
-def normalise_power(spectro, avg_pw):
-    normalised = ((avg_pw/get_power(spectro))**0.5)*spectro
+def normalise_power(wave, avg_pw):
+    normalised = ((avg_pw/get_power_wav(wave))**0.5)*wave
     return normalised
 
-# Input: Dictionary of spectros
-# Output: Power-Normalised Dictionary of spectros
-def normalise_power_batch(spectros):
-    avg_pw = get_avg_power(spectros)    
-    for key in spectros:
-        spectros[key] = normalise_power(spectros[key],avg_pw)
-    return spectros
+# Input: Dictionary of wavs
+# Output: Power-normalised dic of waves
+def normalise_power_batch(waves):
+    avg_pw = get_avg_power(waves)    
+    for key in waves.keys():
+        waves[key] = normalise_power(waves[key],avg_pw)
+    return waves
     
 # Generates noise with the same power as the signal
 # In: tuple of audio shape, signal power, window length, hop length
