@@ -202,7 +202,7 @@ def get_context(i_spectro, hop=1, context=5):
 
 #In: Single Transposed Spectro as np array
 #Out: Context window of specified frame
-def get_context_frame(t_spectro, context=5, frame_num):
+def get_context_frame(t_spectro, frame_num, context=5):
     frames = t_spectro.shape[0]        # Num frames
     i = frame_num
     # start padding required
@@ -224,10 +224,9 @@ def get_context_frame(t_spectro, context=5, frame_num):
 
 #In: Single Transposed Spectrogram as np array
 #Out: np array of context windows w +- 5 frames with hop length 'hop'
-def get_context_spectro(t_spectro, context=5, hop=1):
+def get_context_spectro(t_spectro, context=5, hop=1, RETURN_AS_LIST = True):
   freqs = int(t_spectro.shape[1])    # Frequencies
   frames = t_spectro.shape[0]        # Num frames
-  RETURN_AS_LIST = True #@param {type:"boolean"}
   if RETURN_AS_LIST == True:
     chunks = []
     i = 0
