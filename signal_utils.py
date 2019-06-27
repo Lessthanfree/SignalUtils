@@ -290,7 +290,7 @@ def stft_along_axis(data, window_len = 256, hop_len = 128):
     
 #In: Dictionary of spectrograms
 #Out: Dictionary of normalised spectrograms, concatenated spectrograms, and array of average and variances
-def normalise_inputs(inputs):
+def normalise_spectros(inputs):
     # Concatenate to 1 array
     inputs_concat = normalise_concat(inputs) 
     averages = []
@@ -305,7 +305,7 @@ def normalise_inputs(inputs):
       for row in range(rows):
         inputs[key][row] = (inputs[key][row]-averages[row])/stds[row]
       
-    return inputs, inputs_concat, averages, stds
+    return inputs
 
 #In: Dictionary of spectrograms
 #Out: Numpy arr of concatenated spectrograms
