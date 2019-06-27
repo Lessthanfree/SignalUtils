@@ -64,7 +64,7 @@ def lr_open_wav(filename, sample_rate, DEBUG=0):
 
 # In: Waveform
 # Out: Spectrogram
-def conv_to_spectro(audio):
+def stft(audio):
     WINDOW_LENGTH = 256
     return lr.stft(audio,
                    n_fft=WINDOW_LENGTH,
@@ -112,10 +112,10 @@ def normalise_power_batch(waves):
 # In: tuple of audio shape, signal power, window length, hop length
 # Out: noise with same power as audio, noise power
 def generate_noise(signal, wl, hl):
-    s_signal = conv_to_spectro(signal)
+    s_signal = stft(signal)
     noise = nr.random(signal.shape)
     noise = noise - np.average(noise) # Normalize
-    s_noise = conv_to_spectro(noise)
+    s_noise = stft(noise)
     
     p_signal = su.get_power(s_signal)
     p_noise  = su.get_power(s_noise)
@@ -130,7 +130,7 @@ def generate_noise(signal, wl, hl):
 # Out: 1D Audio wave with noise, same power as original
 def add_noise(audio,snr, wl=256, hl=128, DEBUG=0):
     ratio = 10 ** (snr/10)
-    spectro = conv_to_spectro(audio)
+    spectro = stft(audio)
     p_signal = su.get_power(spectro)
     scaled_noise, p_noise = generate_noise(audio, wl, hl)
     
