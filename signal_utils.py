@@ -117,8 +117,8 @@ def generate_noise(signal, wl, hl):
     noise = noise - np.average(noise) # Normalize
     s_noise = stft(noise)
     
-    p_signal = su.get_power(s_signal)
-    p_noise  = su.get_power(s_noise)
+    p_signal = get_power_spec(s_signal)
+    p_noise  = get_power_spec(s_noise)
     
     # Scale waveform and power
     scaled_noise = noise*((p_signal/p_noise)**0.5)
@@ -131,7 +131,7 @@ def generate_noise(signal, wl, hl):
 def add_noise(audio,snr, wl=256, hl=128, DEBUG=0):
     ratio = 10 ** (snr/10)
     spectro = stft(audio)
-    p_signal = su.get_power(spectro)
+    p_signal = get_power_spec(spectro)
     scaled_noise, p_noise = generate_noise(audio, wl, hl)
     
     # Scale signal and noise to match SNR.
@@ -308,13 +308,20 @@ def normalise_spectros(inputs):
 
 #In: Dictionary of spectrograms
 #Out: Numpy arr of concatenated spectrograms
-def normalise_concat(inputs):
+def normalise_concat(inputs, DEBUG = False):
   output = np.empty((129,0))
+  count = 0
   for spectro in inputs.values():
     output = np.append(output, spectro, axis = 1)
+    count += 1
+    if DEBUG = True:
+        print(str(count) + ' array concatenated')
   return output
 
+#In: Dictionary of spectrograms
+#Out: Dictionry of lg_pwr spectrograms
 def log_spectro(data):
-    stft = stft_along_axis(data)
-    log_spectro = np.log(abs(stft+1e-32))
-    return log_spectro
+    keys = data.keys()
+    for key in keys:
+        data[key] = np.log(abs(data[key]+1e-32))
+    return data
