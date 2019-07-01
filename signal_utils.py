@@ -295,7 +295,7 @@ def transpose_matrix(matrix):
 
 # In: Dictionary of spectrograms
 # Out: Dictionary of transposed spectrograms
-def transpose_batch(spectros_dict)
+def transpose_batch(spectros_dict):
     transposed = {}
     keys = spectros_dict.keys()
     for key in keys:
@@ -334,7 +334,7 @@ def normalise_concat(inputs, DEBUG = False):
   for spectro in inputs.values():
     output = np.append(output, spectro, axis = 1)
     count += 1
-    if DEBUG = True:
+    if DEBUG == True:
         print(str(count) + ' array concatenated')
   return output
 
