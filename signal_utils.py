@@ -71,8 +71,17 @@ def stft(audio):
                    hop_length=WINDOW_LENGTH//2,
                    win_length=int(WINDOW_LENGTH))
 
+# In: Dictionary of wav
+# Out: Dictionary of corresponding spectrograms
+def stft_batch(wav_dict):
+    spectros = {}
+    keys = wav_dict.values()
+    for key in keys:
+        spectros[key] = stft(wav_dict[key])
+    return spectros
+
 # In: 2D Spectrogram
-# Out: Power
+# Out: Power of Spectrogram
 def get_power_spec(spectro):
     if not len(spectro.shape) == 2:
         raise Exception("Expected 2D spectrogram, got shape " + str(spectro.shape))
@@ -82,6 +91,8 @@ def get_power_spec(spectro):
     power = np.average(frame_avg)     # Avg power of entire spectro
     return power
 
+# In: Wav
+# Out: Power of wav
 def get_power_wav(audio):
     spectro = lr.stft(audio,n_fft=256,hop_length=128)
     return get_power_spec(spectro) 
@@ -160,7 +171,7 @@ def cutoff(data):
 # Crop the data in a variable shape dictionary to the shortest sample length, start decided randomly
 # In: Dictionary of spectrograms
 # Out: Numpy array of cropped spectrograms
-def cutoff_2d(data):
+def cutoff_2d_batch(data):
     keys = list(data.keys())
     std_len = min(x_trn[key].shape[1] for key in keys)
     new_data = []
@@ -171,34 +182,34 @@ def cutoff_2d(data):
         new_data.append(cut_sample)
     return np.array(new_data)
 
-# For each frame, grab the context window
-# In: transposed spectrogram (X, 129)
-# Out: 3D transposed spectrogram (X, 2C + 1, 129) where C = context
-def get_context(i_spectro, hop=1, context=5):
-    freq = int(i_spectro.shape[1])
-    end = i_spectro.shape[0]
-    chunks = np.empty((0,2*context+1,freq))
-    i = 0
-    while i < end:
-        if i < context:
-            b_windows = int(context - i)
-            z = np.zeros((b_windows,freq),)
-            back = np.append(z,i_spectro[:i+1],axis=0)
-        else:
-            back = i_spectro[i-context:i+1]
-        if i + context > end:
-            f_windows = i + context - end
-            z = np.zeros((f_windows,freq),)
-            front = np.append(i_spectro[i:],z,axis=0)
-        else:
-            front = i_spectro[i:i+context]
+# # For each frame, grab the context window
+# # In: transposed spectrogram (X, 129)
+# # Out: 3D transposed spectrogram (X, 2C + 1, 129) where C = context
+# def get_context(i_spectro, hop=1, context=5):
+#     freq = int(i_spectro.shape[1])
+#     end = i_spectro.shape[0]
+#     chunks = np.empty((0,2*context+1,freq))
+#     i = 0
+#     while i < end:
+#         if i < context:
+#             b_windows = int(context - i)
+#             z = np.zeros((b_windows,freq),)
+#             back = np.append(z,i_spectro[:i+1],axis=0)
+#         else:
+#             back = i_spectro[i-context:i+1]
+#         if i + context > end:
+#             f_windows = i + context - end
+#             z = np.zeros((f_windows,freq),)
+#             front = np.append(i_spectro[i:],z,axis=0)
+#         else:
+#             front = i_spectro[i:i+context]
         
-        chunk = np.expand_dims(np.append(back,front,axis=0),axis=0)
-        #print("single",chunk.shape,"collection",chunks.shape)
-        chunks = np.append(chunks,chunk,axis=0)
+#         chunk = np.expand_dims(np.append(back,front,axis=0),axis=0)
+#         #print("single",chunk.shape,"collection",chunks.shape)
+#         chunks = np.append(chunks,chunk,axis=0)
         
-        i+=hop
-    return chunks
+#         i+=hop
+#     return chunks
 
 #In: Single Transposed Spectro as np array
 #Out: Context window of specified frame
@@ -282,6 +293,15 @@ def transpose_matrix(matrix):
     print("Finished transposing")
     return result
 
+# In: Dictionary of spectrograms
+# Out: Dictionary of transposed spectrograms
+def transpose_batch(spectros_dict)
+    transposed = {}
+    keys = spectros_dict.keys()
+    for key in keys:
+        transposed[key] = spectros_dict[key].transpose()
+    return transposed
+
 def stft_along_axis(data, window_len = 256, hop_len = 128):
     stft = lambda x: lr.stft(x, window_len, hop_len, window_len)
     labels = np.apply_along_axis(stft,1,data)
@@ -320,8 +340,8 @@ def normalise_concat(inputs, DEBUG = False):
 
 #In: Dictionary of spectrograms
 #Out: Dictionry of lg_pwr spectrograms
-def log_spectro(data):
+def log_pwr_batch(data):
     keys = data.keys()
     for key in keys:
-        data[key] = np.log(abs(data[key]+1e-32))
+        data[key] = np.log(np.abs(data[key]+1e-32))
     return data
