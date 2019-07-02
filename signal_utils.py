@@ -183,33 +183,23 @@ def cutoff_2d_batch(data):
     return np.array(new_data)
 
 # # For each frame, grab the context window
-# # In: transposed spectrogram (X, 129)
-# # Out: 3D transposed spectrogram (X, 2C + 1, 129) where C = context
-# def get_context(i_spectro, hop=1, context=5):
-#     freq = int(i_spectro.shape[1])
-#     end = i_spectro.shape[0]
-#     chunks = np.empty((0,2*context+1,freq))
-#     i = 0
-#     while i < end:
-#         if i < context:
-#             b_windows = int(context - i)
-#             z = np.zeros((b_windows,freq),)
-#             back = np.append(z,i_spectro[:i+1],axis=0)
-#         else:
-#             back = i_spectro[i-context:i+1]
-#         if i + context > end:
-#             f_windows = i + context - end
-#             z = np.zeros((f_windows,freq),)
-#             front = np.append(i_spectro[i:],z,axis=0)
-#         else:
-#             front = i_spectro[i:i+context]
-        
-#         chunk = np.expand_dims(np.append(back,front,axis=0),axis=0)
-#         #print("single",chunk.shape,"collection",chunks.shape)
-#         chunks = np.append(chunks,chunk,axis=0)
-        
-#         i+=hop
-#     return chunks
+# # In: Dict of normal spectrograms (129, X)
+# # Out: Dict of 3D TRANSPOSED spectrograms (X, 2C + 1, 129) where C = context
+def batch_get_context_spectro(spectros, context, hop):
+  key_list = list(spectros.keys())
+  out = {}
+  for k in key_list:
+    curr_spec = spectros[k]
+    t_spec = np.swapaxes(curr_spec,0,1) #Transpose each spectrogram
+    cont_lst = get_context_spectro(t_spec, context, hop, RETURN_AS_LIST = True)
+    
+    ext = 1
+    for c in cont_lst:
+      new_k = k +'-'+str(ext)
+      out[new_k] = c
+      ext += 1
+      
+  return out
 
 #In: Single Transposed Spectro as np array
 #Out: Context window of specified frame
