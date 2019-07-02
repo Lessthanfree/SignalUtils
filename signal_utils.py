@@ -309,9 +309,9 @@ def stft_along_axis(data, window_len = 256, hop_len = 128):
     
 #In: Dictionary of spectrograms
 #Out: Dictionary of normalised spectrograms, concatenated spectrograms, and array of average and variances
-def normalise_spectros(inputs):
+def normalise_spectros(inputs, DEBUG = False):
     # Concatenate to 1 array
-    inputs_concat = normalise_concat(inputs) 
+    inputs_concat = normalise_concat(inputs, DEBUG) 
     averages = []
     stds = []
     rows = inputs_concat.shape[0]
@@ -326,17 +326,17 @@ def normalise_spectros(inputs):
       
     return inputs
 
-#In: Dictionary of spectrograms
-#Out: Numpy arr of concatenated spectrograms
-def normalise_concat(inputs, DEBUG = False):
-  output = np.empty((129,0))
-  count = 0
-  for spectro in inputs.values():
-    output = np.append(output, spectro, axis = 1)
-    count += 1
-    if DEBUG == True:
-        print(str(count) + ' array concatenated')
-  return output
+# #In: Dictionary of spectrograms
+# #Out: Numpy arr of concatenated spectrograms
+# def normalise_concat(inputs, DEBUG = False):
+#   output = np.empty((129,0))
+#   count = 0
+#   for spectro in inputs.values():
+#     output = np.append(output, spectro, axis = 1)
+#     count += 1
+#     if DEBUG == True:
+#         print(str(count) + ' array concatenated')
+#   return output
 
 #In: Dictionary of spectrograms
 #Out: Numpy arr of concatenated spectrograms
