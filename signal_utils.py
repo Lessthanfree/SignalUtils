@@ -75,7 +75,7 @@ def stft(audio):
 # Out: Dictionary of corresponding spectrograms
 def stft_batch(wav_dict):
     spectros = {}
-    keys = wav_dict.values()
+    keys = wav_dict.keys()
     for key in keys:
         spectros[key] = stft(wav_dict[key])
     return spectros
@@ -336,6 +336,30 @@ def normalise_concat(inputs, DEBUG = False):
     count += 1
     if DEBUG == True:
         print(str(count) + ' array concatenated')
+  return output
+
+#In: Dictionary of spectrograms
+#Out: Numpy arr of concatenated spectrograms
+def normalise_concat(spectros, DEBUG = False):
+  length = 0
+  # Obtain max length of concat
+  for key in spectros.keys():
+    length += spectros[key].shape[1]
+    if DEBUG == True:
+      print(str(length)+ 'current length') 
+
+  count = 0
+  arrayth = 0
+  output = np.empty((129,length))
+
+  # Concat arrays      
+  for spectro in spectros.values():
+    output[:,count:(count+spectro.shape[1])] = spectro
+    count += spectro.shape[1]
+    arrayth += 1
+    if DEBUG == True:
+        print(str(arrayth) + ' array concatenated')
+  print(output.shape)
   return output
 
 #In: Dictionary of spectrograms
