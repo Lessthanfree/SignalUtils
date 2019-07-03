@@ -359,3 +359,36 @@ def log_pwr_batch(data):
     for key in keys:
         data[key] = np.log(np.abs(data[key]+1e-32))
     return data
+
+# Combine a wave amplitude and phase
+def join_wave(amp,phs):
+    def pol_to_cart(rho, phi):
+        x = rho * np.cos(phi)
+        y = rho * np.sin(phi)
+        return(x, y)
+    # combine
+    a, b = pol_to_cart(amp,phs)
+    return a + b*1j
+
+def wav_to_file(out_path, wav, sample_rate = 8000):
+  o_wave = wav.astype('float32')
+  lo.write_wav(out_path,o_wave,sample_rate)
+  print("Written to " + out_path)
+
+# Feeding in a non-complex spectrogram will return a wave with zero phase
+# Takes in a log spectrogram and returns a waveform
+def lgspectro_to_wav(lgspectrogram, sr = 8000, window_len = 256, hop_len = 128, phase=None):
+
+  # Reverse the log on the spectrogram values
+  unlog = lambda x: (10**x) 
+  spectrogram = unlog(lgspectrogram)
+
+  # Reverse the absolute function to get back a cartesian form complex number
+  if phase == None:
+    phase = np.zeros(spectrogram.shape)
+  joined = join_wave(spectrogram,phase)
+
+  # Get the length of the wav in ms
+  wav_length = int(spectrogram.shape[1]*hop_len)
+  amplitude = lb.istft(joined,hop_length=hop_len,win_length=window_len,length=wav_length,center=True)
+  return amplitude
