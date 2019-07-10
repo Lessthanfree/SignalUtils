@@ -299,9 +299,9 @@ def stft_along_axis(data, window_len = 256, hop_len = 128):
     
 #In: Dictionary of spectrograms
 #Out: Dictionary of normalised spectrograms, concatenated spectrograms, and array of average and variances
-def normalise_spectros(inputs, DEBUG = False):
+def normalise_spectros(inputs, f_bins, DEBUG = False):
     # Concatenate to 1 array
-    inputs_concat = normalise_concat(inputs, DEBUG) 
+    inputs_concat = normalise_concat(inputs,f_bins, DEBUG) 
     averages = []
     stds = []
     rows = inputs_concat.shape[0]
@@ -330,7 +330,7 @@ def normalise_spectros(inputs, DEBUG = False):
 
 #In: Dictionary of spectrograms
 #Out: Numpy arr of concatenated spectrograms
-def normalise_concat(spectros, DEBUG = False):
+def normalise_concat(spectros, f_bins, DEBUG = False):
   length = 0
   # Obtain max length of concat
   for key in spectros.keys():
@@ -340,16 +340,15 @@ def normalise_concat(spectros, DEBUG = False):
 
   count = 0
   arrayth = 0
-  output = np.empty((129,length))
+  output = np.empty((f_bins,length))
 
   # Concat arrays      
   for spectro in spectros.values():
     output[:,count:(count+spectro.shape[1])] = spectro
     count += spectro.shape[1]
     arrayth += 1
-    if DEBUG == True:
-        print(str(arrayth) + ' array concatenated')
-  print(output.shape)
+    if DEBUG: print(str(arrayth) + ' array concatenated')
+  if DEBUG: print(output.shape)
   return output
 
 #In: Dictionary of spectrograms
