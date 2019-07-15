@@ -375,7 +375,8 @@ def wav_to_file(out_path, wav, sample_rate = 8000):
   print("Written to " + out_path)
 
 # Feeding in a non-complex spectrogram will return a wave with zero phase
-# Takes in a log spectrogram and returns a waveform
+# In: log spectrogram 
+# Out: returns a waveform
 def lgspectro_to_wav(lgspectrogram, sr = 8000, window_len = 256, hop_len = 128, phase=None):
 
   # Reverse the log on the spectrogram values
@@ -391,3 +392,68 @@ def lgspectro_to_wav(lgspectrogram, sr = 8000, window_len = 256, hop_len = 128, 
   wav_length = int(spectrogram.shape[1]*hop_len)
   amplitude = lb.istft(joined,hop_length=hop_len,win_length=window_len,length=wav_length,center=True)
   return amplitude
+
+# In: Trained model, data as a tuple, number of frequency bands, number of outputs...
+# Out: A list of predicted spectrograms by the given model from the given data.
+# Stitched together and scaled down for overlaps
+def multi_predict(model, data, f_bands, outputs=4, radius=5, hop=1, out_radius=5):
+  num_windows = data[0].shape[0]
+  end_shape = (num_windows*hop + 2*out_radius, f_bands)
+  zero_arr = np.zeros(end_shape)
+  multi_out = np.tile(zero_arr, (outputs,1,1))
+  print('Multi-out shape',multi_out.shape)
+  
+  ci = out_radius # center index
+  # Iterate over each context window
+  for i in range(num_windows):
+    inp = ()
+    for d in data:
+      frame = d[i]
+      frame = np.reshape(frame,(1,frame.shape[0],frame.shape[1]))
+      inp = inp + (frame,)
+    raw_pred = model.predict(inp)
+    for op in range(outputs):
+      # Add prediction to spectro
+      out_arr = multi_out[op]
+      pred = raw_pred[op]
+      out_arr[ci-out_radius: ci + out_radius + 1] = out_arr[ci-out_radius: ci + out_radius + 1] + pred
+    ci += hop
+    
+  for pred_arr in multi_out:
+    pred_arr = pred_arr[out_radius:-out_radius]
+    #Fringe scaling 
+    for i in range(out_radius):
+      pred_arr[i] = pred_arr[i]/(out_radius+i+1)
+      pred_arr[-i-1] = pred_arr[-i-1]/(out_radius+i+1)
+    #Main body scaling
+    pred_arr[out_radius:-out_radius] = pred_arr[out_radius:-out_radius]/(2*out_radius + 1)
+    pred_arr = np.swapaxes(pred_arr,0,1)
+
+  return multi_out
+
+# Function to get average and variance of spectrograms
+# In: Spectrogram Dictionary, n frequency bands
+# Out: average, variance
+def get_avg_var(spec_dict, f_bands=129):
+  summ = np.zeros((f_bands))
+  frames = 0
+  keys = list(spec_dict.keys())
+  # Get average
+  for k in keys:
+    spec = spec_dict[k]
+    summ = summ + np.sum(spec,axis=1)
+    frames += spec.shape[1]
+  averages = summ / frames
+  flat_avg = np.reshape(averages,(f_bands,1))
+  diffs = np.zeros(f_bands)
+  # Getting Variance
+  for k in keys:
+    diff = np.square(spec_dict[k] - flat_avg)
+    diff = np.sum(diff,axis=1)
+    diffs += diff
+  variance = diffs/frames
+  return averages, variance 
+
+def reverse_norm_spec(spectro, avg, stdev):
+  out = spectro*stdev + avg
+  return out
